@@ -70,13 +70,13 @@ Module.register(ourModuleName, {
 				Log.error(self.name, "Could not load photos.");
 			}
 
-			if (!photosResponse.ok) {
-				if (retry) {
-					self.scheduleUpdate(self.loaded ? -1 : self.config.retryDelay);
-				}
+			// Always refresh the directory list on getInterval (pre-fetch XHR behavior).
+			if (retry) {
+				self.scheduleUpdate(self.loaded ? -1 : self.config.retryDelay);
 			}
 		} catch (error) {
 			Log.error(self.name, error);
+			self.scheduleUpdate(self.config.retryDelay);
 		}
 	},
 	notificationReceived(notification, payload, sender) {
@@ -317,7 +317,7 @@ Module.register(ourModuleName, {
 	
 			//Do this if we want to see the city!						
 				if (this.config.showCity && this.config.BigDataGeoAPI != "") {
-				if (photoImage.lat.length > 0){
+				if (photoImage.lat && photoImage.lat.length > 0){
 						//exifDate.innerHTML = exifDate.innerHTML + "<BR>" + "Lat: " + photoImage.lat + "<BR>" +  "Lon: " + photoImage.lon;								
 						
 						Log.log("Calling Fetch");
@@ -351,7 +351,7 @@ Module.register(ourModuleName, {
 				
 			//Add to the DOM if we wanted either!	
 			if (this.config.showDateLabel || this.config.showExifDate){
-				this.wrapper.appendChild(exifDate);
+				wrapper.appendChild(exifDate);
 			}
 		//END EXIF ADDITION						
 		
@@ -495,7 +495,7 @@ Module.register(ourModuleName, {
 				
 						//Do this if we want to see the city!						
 			if (this.config.showCity && this.config.BigDataGeoAPI != "") {
-				if (photoImage.lat.length > 0){
+				if (photoImage.lat && photoImage.lat.length > 0){
 						//exifDate.innerHTML = exifDate.innerHTML + "<BR>" + "Lat: " + photoImage.lat + "<BR>" +  "Lon: " + photoImage.lon;								
 						
 						Log.log("Calling Fetch");
