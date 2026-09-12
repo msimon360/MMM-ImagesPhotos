@@ -52,12 +52,12 @@ Module.register(ourModuleName, {
 	* Requests new data from api url helper
 	*/
 	async getPhotos() {
-		const urlApHelper = `/MMM-ImagesPhotos/photos/${this.identifier}`;
+		const urlApHelper = `/MMM-ImagesPhotos/photos/${this.identifier}?t=${Date.now()}`;
 		const self = this;
 		let retry = true;
 
 		try {
-			const photosResponse = await fetch(urlApHelper);
+			const photosResponse = await fetch(urlApHelper, { cache: "no-store" });
 
 			if (photosResponse.ok) {
 				const photosData = await photosResponse.json();
@@ -70,9 +70,8 @@ Module.register(ourModuleName, {
 				Log.error(self.name, "Could not load photos.");
 			}
 
-			// Always refresh the directory list on getInterval (pre-fetch XHR behavior).
 			if (retry) {
-				self.scheduleUpdate(self.loaded ? -1 : self.config.retryDelay);
+				self.scheduleUpdate();
 			}
 		} catch (error) {
 			Log.error(self.name, error);
@@ -80,6 +79,10 @@ Module.register(ourModuleName, {
 		}
 	},
 	notificationReceived(notification, payload, sender) {
+		if (notification === "MMM_IMAGESPHOTOS_REFRESH") {
+			this.getPhotos();
+			return;
+		}
 		// Hook to turn off messages about notiofications, clock once a second
 		if (notification === "ALL_MODULES_STARTED") {
 			const ourInstances = MM.getModules().withClass(ourModuleName);
@@ -123,10 +126,12 @@ Module.register(ourModuleName, {
 		if (typeof delay !== "undefined" && delay >= 0) {
 			nextLoad = delay;
 		}
-
-		const self = this;
-		setTimeout(() => {
-			self.getPhotos();
+		if (this.refreshTimer) {
+			clearTimeout(this.refreshTimer);
+		}
+		this.refreshTimer = setTimeout(() => {
+			this.refreshTimer = null;
+			this.getPhotos();
 		}, nextLoad);
 	},
 
